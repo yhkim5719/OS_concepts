@@ -34,10 +34,14 @@ string recvFileName()
 	fileNameMsg rcvFile;
 
         /* TODO: Receive the file name using msgrcv() */
-	
+	if (msgrcv(msqid, &rcvFile, MAX_FILE_NAME_SIZE, 3, 0) < 0) {
+		perror("msgrcv");
+		exit(-1);
+	}
+
 	/* TODO: return the received file name */
 	
-        return fileName;
+        return rcvFile.fileName;
 }
  /**
  * Sets up the shared memory segment and message queue
@@ -103,7 +107,7 @@ unsigned long mainLoop(const char* fileName)
 	string recvFileNameStr = fileName;
 	
 	/* TODO: append __recv to the end of file name */
-	strcat(fileName, "__recv");
+	strcat(recvFileNameStr, "__recv");
 
 	/* Open the file for writing */
 	FILE* fp = fopen(recvFileNameStr.c_str(), "w");
@@ -133,7 +137,7 @@ unsigned long mainLoop(const char* fileName)
 		 * <ORIGINAL FILENAME__recv>. For example, if the name of the original
 		 * file is song.mp3, the name of the received file is going to be song.mp3__recv.
 		 */
-		
+//TODO TODO TODO TODO		msgSize = msgrcv(msqid, &fp, ,1 , 0)
 
 		/* If the sender is not telling us that we are done, then get to work */
 		if(msgSize != 0)
@@ -173,10 +177,22 @@ unsigned long mainLoop(const char* fileName)
 void cleanUp(const int& shmid, const int& msqid, void* sharedMemPtr)
 {
 	/* TODO: Detach from shared memory */
-	
+	if ( shmctl(shmid, IPC_RMID, 0) < 0 ) {
+		perror("shmctl");
+		exit(-1);
+	}
+
 	/* TODO: Deallocate the shared memory segment */
-	
+	if ( shmdt(sharedMemPtr) < 0 ) {
+		perror("shmdt");
+		exit(-1);
+	}
+
 	/* TODO: Deallocate the message queue */
+	if ( msgctl(msqid, IPC_RMID, 0) < 0 ) {
+		perror("msgctl");
+		exit(-1);
+	}
 }
 
 /**
@@ -210,6 +226,7 @@ int main(int argc, char** argv)
 	/* TODO: Detach from shared memory segment, and deallocate shared memory 
 	 * and message queue (i.e. call cleanup) 
 	 */
-		
+	cleanUp(shmid, msqid, sharedMemPtr);
+
 	return 0;
 }
