@@ -42,28 +42,30 @@ void init(int& shmid, int& msqid, void*& sharedMemPtr)
 	
 	// 2, 3.
 	key_t key = ftok("keyfile.txt", 'a');
-//	printf("key = %d\n", key);		//TODO TEST
+	printf("key = %d\n", key);		//TODO TEST
 
 	if (key == -1) {
 		perror("ftok");
 	}
 
 	/* TODO: Get the id of the shared memory segment. The size of the segment must be SHARED_MEMORY_CHUNK_SIZE */
-	shmid = shmget(key, SHARED_MEMORY_CHUNK_SIZE, IPC_CREAT | IPC_EXCL);
-//	printf("shmid = %d\n", shmid);		//TODO TEST
+	shmid = shmget(key, 1000, IPC_CREAT | 666);
+	printf("shmid = %d\n", shmid);		//TODO TEST
 
 	if (shmid == -1) {
 		perror("shmget");
-		exit(-1);
 	}
 
 	/* TODO: Attach to the shared memory */
 	sharedMemPtr = shmat(shmid, NULL, 0);
-//	printf("*shareMemPtr = %d\n", *shareMemPtr);		//TODO TEST
+	if(sharedMemPtr == (void*)-1) {
+		perror("shmat");
+	}
+//	printf("*sharedMemPtr = %c\n", *sharedMemPtr);		//TODO TEST
 
 	/* TODO: Attach to the message queue */
-	msqid = msgget(key, IPC_CREAT);
-//	printf("msqid = %d\n", msqid);		//TODO TEST
+	msqid = msgget(key, IPC_CREAT | 0666);
+	printf("msqid = %d\n", msqid);		//TODO TEST
 
 	/* Store the IDs and the pointer to the shared memory region in the corresponding function parameters */
 }
@@ -77,21 +79,20 @@ void init(int& shmid, int& msqid, void*& sharedMemPtr)
 void cleanUp(const int& shmid, const int& msqid, void* sharedMemPtr)
 {	
 	/* TODO: Detach from shared memory */
-	// remove message queue
-	if ( msgctl(msqid, IPC_RMID, 0) < 0 ) {
-		perror("msgctl");
-		exit(-1);
-	}
 
 	/* TODO: Detach from shared memory */
-	if ( shmdt(sharedMemPtr) < 0 ) {
+	if ( shmdt(sharedMemPtr) == -1 ) {
 		perror("shmdt");
-		exit(-1);
 	}
+	
 	// remove shared memory
-	if ( shmctl(shmid, IPC_RMID, 0) < 0 ) {
+	if ( shmctl(shmid, IPC_RMID, 0) == -1 ) {
 		perror("shmctl");
-		exit(-1);
+	}
+	
+	// remove message queue
+	if ( msgctl(msqid, IPC_RMID, 0) == -1 ) {
+		perror("msgctl");
 	}
 
 }
@@ -143,8 +144,9 @@ unsigned long sendFile(const char* fileName)
 		/* TODO: Send a message to the receiver telling him that the data is ready
  		 * to be read (message of type SENDER_DATA_TYPE).
  		 */
-		sndMsg.mtype = 1;
-		if( msgsnd(msqid, &sndMsg, sizeof(sndMsg) - sizeof(long), 0) < 0 ) {
+		sndMsg.mtype = SENDER_DATA_TYPE;
+		if( msgsnd(msqid, &sndMsg, sizeof(sndMsg) - sizeof(long), 0) == -1 ) {
+			printf("line 150 in sendFileName\n");		//TODO Test
 			perror("msgsnd");
 			exit(-1);
 		}	
@@ -163,6 +165,7 @@ unsigned long sendFile(const char* fileName)
  	  * sending a message of type SENDER_DATA_TYPE with size field set to 0. 	
 	  */
 	if( msgsnd(msqid, &sndMsg, 0, 0) < 0 ) {
+		printf("line 168, in sendFile\n");		//TODO Test
 		perror("msgsnd");
 		exit(-1);
 	}
@@ -200,12 +203,12 @@ void sendFileName(const char* fileName)
 	fNameMsg.mtype = FILE_NAME_TRANSFER_TYPE;
 
 	/* TODO: Set the file name in the message */
-	strncpy(fNameMsg.fileName, fileName, fileNameSize);
+	strncpy(fNameMsg.fileName, fileName, fileNameSize + 1);
 
 	/* TODO: Send the message using msgsnd */
-	if( msgsnd(msqid, &fNameMsg, sizeof(fileName) - sizeof(long), 0) < 0 ) {
+	if( msgsnd(msqid, &fNameMsg.fileName, sizeof(fNameMsg.fileName), 0) == -1 ) {
+		printf("msgsnd = %d, line 209 in sendFileName\n", msgsnd);		//TODO Test
 		perror("msgsnd");
-		exit(-1);
 	}	
 }
 
