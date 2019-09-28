@@ -49,7 +49,7 @@ void init(int& shmid, int& msqid, void*& sharedMemPtr)
 	}
 
 	/* TODO: Get the id of the shared memory segment. The size of the segment must be SHARED_MEMORY_CHUNK_SIZE */
-	shmid = shmget(key, 1000, IPC_CREAT | 666);
+	shmid = shmget(key, 1000, 0666);
 	printf("shmid = %d\n", shmid);		//TODO TEST
 
 	if (shmid == -1) {
@@ -64,7 +64,7 @@ void init(int& shmid, int& msqid, void*& sharedMemPtr)
 //	printf("*sharedMemPtr = %c\n", *sharedMemPtr);		//TODO TEST
 
 	/* TODO: Attach to the message queue */
-	msqid = msgget(key, IPC_CREAT | 0666);
+	msqid = msgget(key, 0666);
 	printf("msqid = %d\n", msqid);		//TODO TEST
 
 	/* Store the IDs and the pointer to the shared memory region in the corresponding function parameters */
