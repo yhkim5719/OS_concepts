@@ -18,6 +18,8 @@ int shmid, msqid;
 /* The pointer to the shared memory */
 void *sharedMemPtr = NULL;
 
+message rcvMsg;		// don't we need this?
+ackMessage sndMsg;	// don't we need this?
 
 /**
  * The function for receiving the name of the file
@@ -62,11 +64,11 @@ void init(int& shmid, int& msqid, void*& sharedMemPtr)
 	   like the file name and the id is like the file object.  Every System V object 
 	   on the system has a unique id, but different objects may have the same key.
 	*/
-	FILE* f;
-	f = open("keyfile.txt", "w");
-	if (f != NULL) {
-		fprintf(f, "Hello world");
-	}
+//	FILE* f;
+//	f = fopen("keyfile.txt", "w");
+//	if (f != NULL) {
+//		fprintf(f, "Hello world");
+//	}
 
 	key_t key = ftok("keyfile.txt", 'a');
 	if (key == -1) {
@@ -107,7 +109,7 @@ unsigned long mainLoop(const char* fileName)
 	string recvFileNameStr = fileName;
 	
 	/* TODO: append __recv to the end of file name */
-	strcat(recvFileNameStr, "__recv");
+	recvFileNameStr.append("__recv");
 
 	/* Open the file for writing */
 	FILE* fp = fopen(recvFileNameStr.c_str(), "w");
@@ -137,13 +139,17 @@ unsigned long mainLoop(const char* fileName)
 		 * <ORIGINAL FILENAME__recv>. For example, if the name of the original
 		 * file is song.mp3, the name of the received file is going to be song.mp3__recv.
 		 */
-//TODO TODO TODO TODO		msgSize = msgrcv(msqid, &fp, ,1 , 0)
+		if((msgSize = msgrcv(msqid, &rcvMsg, sizeof(rcvMsg) - sizeof(long),1 , 0)) == -1) {
+			perror("msgrcv");
+			exit(-1);
+		}
 
 		/* If the sender is not telling us that we are done, then get to work */
 		if(msgSize != 0)
 		{
 			/* TODO: count the number of bytes received */
-			
+			numBytesRecv += msgSize;
+
 			/* Save the shared memory to file */
 			if(fwrite(sharedMemPtr, sizeof(char), msgSize, fp) < 0)
 			{
@@ -154,6 +160,12 @@ unsigned long mainLoop(const char* fileName)
  			 * I.e., send a message of type RECV_DONE_TYPE. That is, a message
 			 * of type ackMessage with mtype field set to RECV_DONE_TYPE. 
  			 */
+			sndMsg.mtype = 2;
+			if(msgsnd(msqid, &sndMsg, 0, 0) == -1) {
+				perror("msgsnd");
+				exit(-1);
+			}
+
 		}
 		/* We are done */
 		else

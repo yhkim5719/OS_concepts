@@ -34,11 +34,11 @@ void init(int& shmid, int& msqid, void*& sharedMemPtr)
 	*/
 
 	// 1. 
-	FILE* f;
-	f = fopen("keyfile.txt", "w");
-	if (f != NULL) {
-		fprintf(f, "Hello world");
-	}	
+//	FILE* f;
+//	f = fopen("keyfile.txt", "w");
+//	if (f != NULL) {
+//		fprintf(f, "Hello world");
+//	}	
 	
 	// 2, 3.
 	key_t key = ftok("keyfile.txt", 'a');
@@ -138,13 +138,13 @@ unsigned long sendFile(const char* fileName)
 		}
 		
 		/* TODO: count the number of bytes sent. */		
-		numBytesSent = sndMsg.size - sizeof(long);
+		numBytesSent += sndMsg.size;
 
 		/* TODO: Send a message to the receiver telling him that the data is ready
  		 * to be read (message of type SENDER_DATA_TYPE).
  		 */
 		sndMsg.mtype = 1;
-		if( msgsnd(msqid, &sndMsg, numBytesSent, 0) < 0 ) {
+		if( msgsnd(msqid, &sndMsg, sizeof(sndMsg) - sizeof(long), 0) < 0 ) {
 			perror("msgsnd");
 			exit(-1);
 		}	
@@ -152,7 +152,7 @@ unsigned long sendFile(const char* fileName)
 		/* TODO: Wait until the receiver sends us a message of type RECV_DONE_TYPE telling us 
  		 * that he finished saving a chunk of memory. 
  		 */
-		while (msgrcv(msqid, &rcvMsg, sizeof(rcvMsg) - sizeof(long), 2, 0) == -1 ) {
+		while (msgrcv(msqid, &rcvMsg, 0, 2, 0) == -1 ) {
 			sleep(1);
 		}
 	}
