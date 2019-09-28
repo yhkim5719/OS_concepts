@@ -1,3 +1,4 @@
+#include <sys/stat.h>
 #include <sys/shm.h>
 #include <sys/msg.h>
 #include <stdio.h>
@@ -33,14 +34,12 @@ void init(int& shmid, int& msqid, void*& sharedMemPtr)
 	   on the system has a unique id, but different objects may have the same key.
 	*/
 
-	// 1. 
 //	FILE* f;
 //	f = fopen("keyfile.txt", "w");
 //	if (f != NULL) {
 //		fprintf(f, "Hello world");
 //	}	
 	
-	// 2, 3.
 	key_t key = ftok("keyfile.txt", 'a');
 	printf("key = %d\n", key);		//TODO TEST
 
@@ -49,7 +48,7 @@ void init(int& shmid, int& msqid, void*& sharedMemPtr)
 	}
 
 	/* TODO: Get the id of the shared memory segment. The size of the segment must be SHARED_MEMORY_CHUNK_SIZE */
-	shmid = shmget(key, 1000, 0666);
+	shmid = shmget(key, SHARED_MEMORY_CHUNK_SIZE, S_IRUSR | S_IWUSR | IPC_CREAT | 0666);
 	printf("shmid = %d\n", shmid);		//TODO TEST
 
 	if (shmid == -1) {

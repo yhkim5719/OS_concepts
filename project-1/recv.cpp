@@ -1,3 +1,4 @@
+#include <sys/stat.h>
 #include <sys/shm.h>
 #include <sys/msg.h>
 #include <signal.h>
@@ -76,9 +77,8 @@ void init(int& shmid, int& msqid, void*& sharedMemPtr)
 		exit(-1);
 	}
 	/* TODO: Allocate a shared memory segment. The size of the segment must be SHARED_MEMORY_CHUNK_SIZE. */
-	if ((shmid = shmget(key, SHARED_MEMORY_CHUNK_SIZE, IPC_CREAT | IPC_EXCL)) == -1) {
+	if ((shmid = shmget(key, SHARED_MEMORY_CHUNK_SIZE, S_IRUSR | S_IWUSR)) == -1) {
 		perror("shmget");
-		exit(-1);
 	}
 
 	/* TODO: Attach to the shared memory */
