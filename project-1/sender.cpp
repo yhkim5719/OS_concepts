@@ -154,11 +154,12 @@ unsigned long sendFile(const char* fileName)
  		 * that he finished saving a chunk of memory. 
  		 */
 		rcvMsg.mtype = RECV_DONE_TYPE;
-		if (msgrcv(msqid, &rcvMsg, 0, 2, 0) == -1) {
+		if (msgrcv(msqid, &rcvMsg, sizeof(rcvMsg) - sizeof(long), 2, 0) == -1) {
 			printf("line 157 msgrcv\n");
 			perror("msgrcv");
 			exit(1);
 		}
+		printf("sending done.\n");
 	}
 	
 
@@ -166,7 +167,7 @@ unsigned long sendFile(const char* fileName)
  	  * Lets tell the receiver that we have nothing more to send. We will do this by
  	  * sending a message of type SENDER_DATA_TYPE with size field set to 0. 	
 	  */
-	if( msgsnd(msqid, &sndMsg, 0, 0) < 0 ) {
+	if (msgsnd(msqid, &sndMsg, 0, 0) == -1) {
 		printf("line 168, in sendFile\n");		//TODO Test
 		perror("msgsnd");
 		exit(-1);
@@ -210,7 +211,7 @@ void sendFileName(const char* fileName)
 
 	/* TODO: Send the message using msgsnd */
 	if( msgsnd(msqid, &fNameMsg, sizeof(fNameMsg) - sizeof(long), 0) == -1 ) {
-		printf("msgsnd = %d, line 209 in sendFileName\n", msgsnd);		//TODO Test
+		printf("msgsnd = %d, line 213 in sendFileName\n", msgsnd);		//TODO Test
 		perror("msgsnd");
 	}	
 }
