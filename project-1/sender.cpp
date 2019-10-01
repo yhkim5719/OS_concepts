@@ -48,7 +48,7 @@ void init(int& shmid, int& msqid, void*& sharedMemPtr)
 	}
 
 	/* TODO: Get the id of the shared memory segment. The size of the segment must be SHARED_MEMORY_CHUNK_SIZE */
-	shmid = shmget(key, SHARED_MEMORY_CHUNK_SIZE, S_IRUSR | S_IWUSR | IPC_CREAT | 0666);
+	shmid = shmget(key, SHARED_MEMORY_CHUNK_SIZE, /* S_IRUSR | S_IWUSR | */ IPC_CREAT | 0666);
 	printf("shmid = %d\n", shmid);		//TODO TEST
 
 	if (shmid == -1) {
@@ -63,7 +63,7 @@ void init(int& shmid, int& msqid, void*& sharedMemPtr)
 //	printf("*sharedMemPtr = %c\n", *sharedMemPtr);		//TODO TEST
 
 	/* TODO: Attach to the message queue */
-	msqid = msgget(key, 0666);
+	msqid = msgget(key, IPC_CREAT | 0666);
 	printf("msqid = %d\n", msqid);		//TODO TEST
 
 	/* Store the IDs and the pointer to the shared memory region in the corresponding function parameters */
@@ -153,8 +153,11 @@ unsigned long sendFile(const char* fileName)
 		/* TODO: Wait until the receiver sends us a message of type RECV_DONE_TYPE telling us 
  		 * that he finished saving a chunk of memory. 
  		 */
-		while (msgrcv(msqid, &rcvMsg, 0, 2, 0) == -1 ) {
-			sleep(1);
+		rcvMsg.mtype = RECV_DONE_TYPE;
+		if (msgrcv(msqid, &rcvMsg, 0, 2, 0) == -1) {
+			printf("line 157 msgrcv\n");
+			perror("msgrcv");
+			exit(1);
 		}
 	}
 	
@@ -203,9 +206,10 @@ void sendFileName(const char* fileName)
 
 	/* TODO: Set the file name in the message */
 	strncpy(fNameMsg.fileName, fileName, fileNameSize + 1);
+	printf("Line 209: filename = %s\n", fNameMsg.fileName);		//TODO Test
 
 	/* TODO: Send the message using msgsnd */
-	if( msgsnd(msqid, &fNameMsg.fileName, sizeof(fNameMsg.fileName), 0) == -1 ) {
+	if( msgsnd(msqid, &fNameMsg, sizeof(fNameMsg) - sizeof(long), 0) == -1 ) {
 		printf("msgsnd = %d, line 209 in sendFileName\n", msgsnd);		//TODO Test
 		perror("msgsnd");
 	}	
