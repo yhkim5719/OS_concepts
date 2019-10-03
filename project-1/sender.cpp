@@ -22,7 +22,7 @@ void* sharedMemPtr;
  */
 void init(int& shmid, int& msqid, void*& sharedMemPtr)
 {
-	/* TODO: 
+	/* 
         1. Create a file called keyfile.txt containing string "Hello world" (you may do
  	    so manually or from the code).
 	2. Use ftok("keyfile.txt", 'a') in order to generate the key.
@@ -40,25 +40,25 @@ void init(int& shmid, int& msqid, void*& sharedMemPtr)
 //	}	
 	
 	key_t key = ftok("keyfile.txt", 'a');
-	printf("key = %d\n", key);		//TODO TEST
+//	printf("key = %d\n", key);		//TEST
 
 	if (key == -1) {
 		perror("ftok");
 	}
 
-	/* TODO: Get the id of the shared memory segment. The size of the segment must be SHARED_MEMORY_CHUNK_SIZE */
+	/* Get the id of the shared memory segment. The size of the segment must be SHARED_MEMORY_CHUNK_SIZE */
 	shmid = shmget(key, SHARED_MEMORY_CHUNK_SIZE, IPC_CREAT | 0666);
 
 	if (shmid == -1) {
 		perror("shmget");
 	}
 
-	/* TODO: Attach to the shared memory */
+	/* Attach to the shared memory */
 	sharedMemPtr = shmat(shmid, NULL, 0);
 
-	/* TODO: Attach to the message queue */
+	/* Attach to the message queue */
 	msqid = msgget(key, IPC_CREAT | 0666);
-	printf("msqid = %d\n", msqid);		//TODO TEST
+//	printf("msqid = %d\n", msqid);		//TEST
 
 	/* Store the IDs and the pointer to the shared memory region in the corresponding function parameters */
 }
@@ -71,9 +71,9 @@ void init(int& shmid, int& msqid, void*& sharedMemPtr)
  */
 void cleanUp(const int& shmid, const int& msqid, void* sharedMemPtr)
 {	
-	/* TODO: Detach from shared memory */
+	/* Detach from shared memory */
 
-	/* TODO: Detach from shared memory */
+	/* Detach from shared memory */
 	if ( shmdt(sharedMemPtr) == -1 ) {
 		perror("shmdt");
 	}
@@ -131,43 +131,40 @@ unsigned long sendFile(const char* fileName)
 			exit(-1);
 		}
 		
-		/* TODO: count the number of bytes sent. */		
+		/* count the number of bytes sent. */		
 		numBytesSent += sndMsg.size;
 
-		/* TODO: Send a message to the receiver telling him that the data is ready
+		/* Send a message to the receiver telling him that the data is ready
  		 * to be read (message of type SENDER_DATA_TYPE).
  		 */
 		sndMsg.mtype = SENDER_DATA_TYPE;
 		if( msgsnd(msqid, &sndMsg, sizeof(sndMsg) - sizeof(long), 0) == -1 ) {
-			printf("line 150 in sendFileName\n");		//TODO Test
 			perror("msgsnd");
 			exit(-1);
 		}	
 
-		/* TODO: Wait until the receiver sends us a message of type RECV_DONE_TYPE telling us 
+		/* Wait until the receiver sends us a message of type RECV_DONE_TYPE telling us 
  		 * that he finished saving a chunk of memory. 
  		 */
 		rcvMsg.mtype = RECV_DONE_TYPE;
 		if (msgrcv(msqid, &rcvMsg, sizeof(rcvMsg) - sizeof(long), 2, 0) == -1) {
-			printf("line 157 msgrcv\n");
 			perror("msgrcv");
 			exit(1);
 		}
 	}
 	
 
-	/** TODO: once we are out of the above loop, we have finished sending the file.
+	/** once we are out of the above loop, we have finished sending the file.
  	  * Lets tell the receiver that we have nothing more to send. We will do this by
  	  * sending a message of type SENDER_DATA_TYPE with size field set to 0. 	
 	  */
 	sndMsg.size = 0;
 	if (msgsnd(msqid, &sndMsg, sizeof(sndMsg) - sizeof(long), 0) == -1) {
-		printf("line 168, in sendFile\n");		//TODO Test
 		perror("msgsnd");
 		exit(-1);
 	}
 	
-	printf("sending done.\n");  //TODO test
+//	printf("sending done.\n");  //test
 
 	/* Close the file */
 	fclose(fp);
@@ -184,7 +181,7 @@ void sendFileName(const char* fileName)
 	/* Get the length of the file name */
 	int fileNameSize = strlen(fileName);
 
-	/* TODO: Make sure the file name does not exceed 
+	/* Make sure the file name does not exceed 
 	 * the maximum buffer size in the fileNameMsg
 	 * struct. If exceeds, then terminate with an error.
 	 */
@@ -193,19 +190,18 @@ void sendFileName(const char* fileName)
 		exit(-1);
 	}
 
-	/* TODO: Create an instance of the struct representing the message
+	/* Create an instance of the struct representing the message
 	 * containing the name of the file.
 	 */
 	fileNameMsg fNameMsg;
 
-	/* TODO: Set the message type FILE_NAME_TRANSFER_TYPE */
+	/* Set the message type FILE_NAME_TRANSFER_TYPE */
 	fNameMsg.mtype = FILE_NAME_TRANSFER_TYPE;
 
-	/* TODO: Set the file name in the message */
+	/* Set the file name in the message */
 	strncpy(fNameMsg.fileName, fileName, fileNameSize + 1);
-	printf("Line 209: filename = %s\n", fNameMsg.fileName);		//TODO Test
 
-	/* TODO: Send the message using msgsnd */
+	/* Send the message using msgsnd */
 	if( msgsnd(msqid, &fNameMsg, sizeof(fNameMsg) - sizeof(long), 0) == -1 ) {
 		perror("msgsnd");
 	}	
@@ -232,7 +228,7 @@ int main(int argc, char** argv)
 	fprintf(stderr, "The number of bytes sent is %lu\n", sendFile(argv[1]));
 	
 	/* Cleanup */
-	cleanUp(shmid, msqid, sharedMemPtr);
+	//cleanUp(shmid, msqid, sharedMemPtr);
 		
 	return 0;
 }
