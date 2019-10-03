@@ -19,8 +19,6 @@ int shmid, msqid;
 /* The pointer to the shared memory */
 void *sharedMemPtr = NULL;
 
-message sndMsg;		// don't we need this? TODO
-ackMessage rcvMsg;	// don't we need this? TODO
 
 /**
  * The function for receiving the name of the file
@@ -114,7 +112,7 @@ unsigned long mainLoop(const char* fileName)
 	recvFileNameStr.append("__recv");
 
 	/* Open the file for writing */
-	FILE* fp = fopen(recvFileNameStr.c_str(), "w+");
+	FILE* fp = fopen(recvFileNameStr.c_str(), "w");
 			
 	/* Error checks */
 	if(!fp)
@@ -127,6 +125,11 @@ unsigned long mainLoop(const char* fileName)
 	/* Keep receiving until the sender sets the size to 0, indicating that
  	 * there is no more data to send.
  	 */	
+	message sndMsg;		// don't we need this? TODO
+	sndMsg.mtype = 1;
+	ackMessage rcvMsg;	// don't we need this? TODO
+	rcvMsg.mtype = 2;
+
 	while(msgSize != 0)
 	{	
 
@@ -141,16 +144,15 @@ unsigned long mainLoop(const char* fileName)
 		 * <ORIGINAL FILENAME__recv>. For example, if the name of the original
 		 * file is song.mp3, the name of the received file is going to be song.mp3__recv.
 		 */
-		sndMsg.mtype = 1;
-		msgSize = msgrcv(msqid, &sndMsg, sizeof(sndMsg) - sizeof(long), 1, 0);
-		printf("msgSize = %d\n", msgSize);
-		if (msgSize == -1) {
-			printf("in recv, line 142\n");
+		if (msgrcv(msqid, &sndMsg, sizeof(sndMsg) - sizeof(long), 1, 0) == -1) {	
 			perror("msgrcv");
 			exit(1);
 		}
+		msgSize = sndMsg.size;
+		printf("msgSize = %d\n", msgSize);
 
 		/* If the sender is not telling us that we are done, then get to work */
+		
 		if(msgSize != 0)
 		{
 			/* TODO: count the number of bytes received */
@@ -166,10 +168,9 @@ unsigned long mainLoop(const char* fileName)
  			 * I.e., send a message of type RECV_DONE_TYPE. That is, a message
 			 * of type ackMessage with mtype field set to RECV_DONE_TYPE. 
  			 */
-			rcvMsg.mtype = 2;
 			if(msgsnd(msqid, &rcvMsg, sizeof(rcvMsg) - sizeof(long), 0) == -1) {
 				perror("msgsnd");
-				exit(-1);
+				exit(1);
 			}
 
 		}
@@ -179,6 +180,7 @@ unsigned long mainLoop(const char* fileName)
 			/* Close the file */
 			fclose(fp);
 		}
+	
 	}
 	
 	return numBytesRecv;

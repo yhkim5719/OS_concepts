@@ -1,4 +1,3 @@
-#include <sys/stat.h>
 #include <sys/shm.h>
 #include <sys/msg.h>
 #include <stdio.h>
@@ -48,8 +47,7 @@ void init(int& shmid, int& msqid, void*& sharedMemPtr)
 	}
 
 	/* TODO: Get the id of the shared memory segment. The size of the segment must be SHARED_MEMORY_CHUNK_SIZE */
-	shmid = shmget(key, SHARED_MEMORY_CHUNK_SIZE, /* S_IRUSR | S_IWUSR | */ IPC_CREAT | 0666);
-	printf("shmid = %d\n", shmid);		//TODO TEST
+	shmid = shmget(key, SHARED_MEMORY_CHUNK_SIZE, IPC_CREAT | 0666);
 
 	if (shmid == -1) {
 		perror("shmget");
@@ -57,10 +55,6 @@ void init(int& shmid, int& msqid, void*& sharedMemPtr)
 
 	/* TODO: Attach to the shared memory */
 	sharedMemPtr = shmat(shmid, NULL, 0);
-	if(sharedMemPtr == (void*)-1) {
-		perror("shmat");
-	}
-//	printf("*sharedMemPtr = %c\n", *sharedMemPtr);		//TODO TEST
 
 	/* TODO: Attach to the message queue */
 	msqid = msgget(key, IPC_CREAT | 0666);
@@ -159,7 +153,6 @@ unsigned long sendFile(const char* fileName)
 			perror("msgrcv");
 			exit(1);
 		}
-		printf("sending done.\n");
 	}
 	
 
@@ -167,11 +160,14 @@ unsigned long sendFile(const char* fileName)
  	  * Lets tell the receiver that we have nothing more to send. We will do this by
  	  * sending a message of type SENDER_DATA_TYPE with size field set to 0. 	
 	  */
-	if (msgsnd(msqid, &sndMsg, 0, 0) == -1) {
+	sndMsg.size = 0;
+	if (msgsnd(msqid, &sndMsg, sizeof(sndMsg) - sizeof(long), 0) == -1) {
 		printf("line 168, in sendFile\n");		//TODO Test
 		perror("msgsnd");
 		exit(-1);
 	}
+	
+	printf("sending done.\n");  //TODO test
 
 	/* Close the file */
 	fclose(fp);
@@ -211,7 +207,6 @@ void sendFileName(const char* fileName)
 
 	/* TODO: Send the message using msgsnd */
 	if( msgsnd(msqid, &fNameMsg, sizeof(fNameMsg) - sizeof(long), 0) == -1 ) {
-		printf("msgsnd = %d, line 213 in sendFileName\n", msgsnd);		//TODO Test
 		perror("msgsnd");
 	}	
 }
