@@ -132,7 +132,6 @@ unsigned long mainLoop(const char* fileName)
 			exit(1);
 		}
 		msgSize = sndMsg.size;
-		printf("msgSize = %d\n", msgSize);
 
 		/* If the sender is not telling us that we are done, then get to work */
 		
@@ -210,7 +209,7 @@ void ctrlCSignal(int signal)
 int main(int argc, char** argv)
 {
 	
-	/* TODO: Install a signal handler (see signaldemo.cpp sample file).
+	/* Install a signal handler (see signaldemo.cpp sample file).
  	 * If user presses Ctrl-c, your program should delete the message
  	 * queue and the shared memory segment before exiting. You may add 
 	 * the cleaning functionality in ctrlCSignal().
