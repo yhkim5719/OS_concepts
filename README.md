@@ -20,10 +20,10 @@ C++
 
 ## Team contribution
 
-Yong -
+Yong - created sender.cpp, created recv.cpp
 
-Hong - 
+Hong - created recv.cpp
 
-Jason -
+Jason - created documentation, created sender.cpp
 
-Jasmine -
+Jasmine - created README.md
