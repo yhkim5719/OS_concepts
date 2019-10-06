@@ -18,8 +18,12 @@ C++
 1. `./sender <FILE NAME>`
   2. `./recv`
 
-## Team collaboration
+## Team contribution
+
 Yong -
+
 Hong - 
-Jason - 
+
+Jason -
+
 Jasmine -
