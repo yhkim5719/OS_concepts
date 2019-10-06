@@ -15,8 +15,8 @@ Programming Language Used:
 C++
 
 ## How to run the program
-1. ./sender <FILE NAME>
-  2. ./recv
+1. `./sender <FILE NAME>`
+  2. `./recv`
 
 ## Team collaboration
 Yong -
