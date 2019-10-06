@@ -15,8 +15,11 @@ Programming Language Used:
 C++
 
 ## How to run the program
-1. `./sender <FILE NAME>`
-  2. `./recv`
+1. Run the make file
+
+2. `./sender <FILE NAME>`
+
+3. `./recv`
 
 ## Team contribution
 
