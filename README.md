@@ -2,7 +2,7 @@
 
 Team members (Section 1):
 
-Yong K -
+Yong Kim - yhkim5719@csu.fullerton.edu
 
 Hong -
 
