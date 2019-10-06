@@ -4,7 +4,7 @@ Team members (Section 1):
 
 Yong Kim - yhkim5719@csu.fullerton.edu
 
-Seong Hong -
+Seong Hong - seongsoohong@csu.fullerton.edu
 
 Jason Jose - jasonsisonjose@csu.fullerton.edu
 
