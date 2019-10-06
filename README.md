@@ -10,6 +10,9 @@ Jason Jose - jasonsisonjose@csu.fullerton.edu
 
 Jasmine Nguyen - msjas@csu.fullerton.edu
 
+Programming Language Used:
+C++
+
 ## How to run the program
 
 
