@@ -22,8 +22,8 @@ C++
 
 Yong - created sender.cpp and recv.cpp
 
-Hong - created recv.cpp
+Hong - created recv.cpp, started extra credit
 
 Jason - created documentation, started sender.cpp
 
-Jasmine - created README.md, testing
+Jasmine - created README.md, started recv.cpp
