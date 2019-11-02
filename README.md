@@ -17,7 +17,7 @@ C++
 ## How to run the program
 1. Run the make file
 
-2. `./sender <FILE NAME>`
+2. `./sender keyfile.txt`
 
 3. `./recv`
 
