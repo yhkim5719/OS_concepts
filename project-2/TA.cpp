@@ -42,18 +42,18 @@ int main(int argc, char* argv[])
 	int id;
 	srand(time(NULL));
 
-    //TODO
+    	//TODO
 	//Initializing Mutex Lock and Semaphores.
 	if (sem_init(&sem_TA, 0, 3) < 0) {
 		perror("sem_init");
-		exit(1);
+		exit(-1);
 	}
 	if (pthread_mutex_init(&cc, NULL) < 0) {
 		perror("pthread_mutex_init");
-		exit(1);
+		exit(-1);
 	}
-     //hint: use sem_init() and pthread_mutex_init()
-     
+	//hint: use sem_init() and pthread_mutex_init()
+	////TODO done
 	
 	if(argc<2)
 	{
@@ -69,14 +69,15 @@ int main(int argc, char* argv[])
 	//Allocate memory for Students
 	Students = (pthread_t*) malloc(sizeof(pthread_t)*number_of_students);
 
-    /*TODO
+	//TODO
 	//Creating one TA thread and N Student threads.
-     //hint: use pthread_create
-
+		//hint: use pthread_create
+	
 	//Waiting for TA thread and N Student threads.
-     //hint: use pthread_join
+		//hint: use pthread_join
      
-     */
+     
+	//TODO done
 
 	//Free allocated memory
 	free(Students); 
@@ -85,43 +86,43 @@ int main(int argc, char* argv[])
 
 void *TA_Activity()
 {
-    /* TODO
+	//TODO
 	//TA is currently sleeping.
 
-    // lock
+	// lock
     
-    //if chairs are empty, break the loop.
+	//if chairs are empty, break the loop.
 
 	//TA gets next student on chair.
-
-    //unlock
+	
+	//unlock
 
 	//TA is currently helping the student
      
-     //hint: use sem_wait(); sem_post(); pthread_mutex_lock(); pthread_mutex_unlock()
-
-*/
+	//hint: use sem_wait(); sem_post(); pthread_mutex_lock(); pthread_mutex_unlock()
+	//TODO done
 }
 
 void *Student_Activity(void *threadID) 
 {
-    /*TODO
+	//TODO
      
 	//Student  needs help from the TA
 	//Student tried to sit on a chair.
 	//wake up the TA.
-    // lock
+	
+	// lock
      
 	// unlock
-    //Student leaves his/her chair.
+	//Student leaves his/her chair.
 	//Student  is getting help from the TA
 	//Student waits to go next.
 	//Student left TA room
-    
-    //If student didn't find any chair to sit on.
-    //Student will return at another time
-     
-     //hint: use sem_wait(); sem_post(); pthread_mutex_lock(); pthread_mutex_unlock()
-			
-	*/
+	
+	//If student didn't find any chair to sit on.
+	
+	//Student will return at another time
+	
+	//hint: use sem_wait(); sem_post(); pthread_mutex_lock(); pthread_mutex_unlock()
+	//TODO done
 }
