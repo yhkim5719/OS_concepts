@@ -36,7 +36,7 @@ pthread_mutex_t TA_c;
 
 
 //Declared Functions
-void *TA_Activity();
+void *TA_Activity(void*);
 void *Student_Activity(void *threadID);
 
 int main(int argc, char* argv[])
@@ -44,25 +44,35 @@ int main(int argc, char* argv[])
 	int number_of_students;		//a variable taken from the user to create student threads.	Default is 5 student threads.
 	int id;
 	srand(time(NULL));
+	
+	int s;				// signal
 
     	//TODO
 	//Initializing Mutex Lock and Semaphores.
-	if (sem_init(&sem_TA, 0, 1) < 0) {
+	if ((s = sem_init(&sem_TA, 0, 1)) < 0) {
 		perror("sem_init");
 		exit(-1);
 	}
-	if (sem_init(&chairs, 0, 3) < 0) {
+	printf("sem_TA initiated with value %d.\n", sem_TA);		//TODO test
+	
+	if ((s = sem_init(&chairs, 0, 3)) < 0) {
 		perror("sem_init");
 		exit(-1);
 	}
-	if (pthread_mutex_init(&hall_c, NULL) < 0) {
+	printf("chairs initiated with value %d.\n", s);		//TODO test
+
+	if ((s = pthread_mutex_init(&hall_c, NULL)) < 0) {
 		perror("pthread_mutex_init");
 		exit(-1);
 	}
-	if (pthread_mutex_init(&TA_c, NULL) < 0) {
+	printf("hall chair initiated with value %d.\n", s);		//TODO test
+
+	if ((s = pthread_mutex_init(&TA_c, NULL)) < 0) {
 		perror("pthread_mutex_init");
 		exit(-1);
 	}
+	printf("TA chair initiated with value %d.\n", s);		//TODO test
+
 	//hint: use sem_init() and pthread_mutex_init()
 	////TODO done
 	
@@ -86,26 +96,30 @@ int main(int argc, char* argv[])
 	pthread_attr_t attr;
 	pthread_attr_init(&attr);
 
-	if (pthread_create(&TA, &attr, TA_Activity, NULL) < 0) {
+	if ((s = pthread_create(&TA, &attr, TA_Activity, NULL)) < 0) {
 		perror("pthread_create");
 		exit(-1);
 	}
+	printf("TA thread created with value %d.\n", s);		//TODO test
 
 	for (int i = 0; i < number_of_students; i++) {
 		int s = 0;
-		s = pthread_create(&Students[i], &attr, Student_Activity, (void *)i);
+		s = pthread_create(&Students[i], &attr, Student_Activity, NULL);
 		if (s < 0) {
 			perror("pthread_create");
 			exit(-1);
 		}
+		printf("Student thread %d created.\n", i);		//TODO test
+
 	}
 
 	//Waiting for TA thread and N Student threads.
 		//hint: use pthread_join
-	if (pthread_join(TA, NULL) < 0) {
+	if ((s = pthread_join(TA, NULL)) < 0) {
 	       perror("pthread_join");
 	       exit(-1);
 	}
+	printf("TA joined with value %d.\n", s);		//TODO test
 
 	for (int i = 0; i < number_of_students; i++) {
 		int s = 0;
@@ -114,6 +128,7 @@ int main(int argc, char* argv[])
 			perror("pthread_join");
 			exit(-1);
 		}
+		printf("Student thread %d joined.\n", i);		//TODO test
 	}
 	//TODO done
 
@@ -122,14 +137,14 @@ int main(int argc, char* argv[])
 	return 0;
 }
 
-void *TA_Activity()
+void *TA_Activity(void*)
 {
 	//TODO
 	//TA is currently sleeping.
-	if (sem_post(&sem_TA) < 0 ) {
-		perror("sem_post");
-		exit(-1);
-	}
+//	if (sem_post(&sem_TA) < 0 ) {
+//		perror("sem_post");
+//		exit(-1);
+//	}
 	// lock
 	
 
