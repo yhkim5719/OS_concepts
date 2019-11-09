@@ -28,8 +28,11 @@ int CurrentIndex = 0;
  */
 // declaration semaphore TA
 sem_t sem_TA;
-// declaration mutex Lock cc (CharisCount)
-pthread_mutex_t cc; //= PTHREAD_MUTEX_INITIALIZER;
+// declaration semaphore chairs
+sem_t chairs;
+// declaration mutex Lock hall chairs and TA chair
+pthread_mutex_t hall_c; //= PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t TA_c;
 
 
 //Declared Functions
@@ -44,11 +47,19 @@ int main(int argc, char* argv[])
 
     	//TODO
 	//Initializing Mutex Lock and Semaphores.
-	if (sem_init(&sem_TA, 0, 3) < 0) {
+	if (sem_init(&sem_TA, 0, 1) < 0) {
 		perror("sem_init");
 		exit(-1);
 	}
-	if (pthread_mutex_init(&cc, NULL) < 0) {
+	if (sem_init(&chairs, 0, 3) < 0) {
+		perror("sem_init");
+		exit(-1);
+	}
+	if (pthread_mutex_init(&hall_c, NULL) < 0) {
+		perror("pthread_mutex_init");
+		exit(-1);
+	}
+	if (pthread_mutex_init(&TA_c, NULL) < 0) {
 		perror("pthread_mutex_init");
 		exit(-1);
 	}
@@ -72,11 +83,38 @@ int main(int argc, char* argv[])
 	//TODO
 	//Creating one TA thread and N Student threads.
 		//hint: use pthread_create
-	
+	pthread_attr_t attr;
+	pthread_attr_init(&attr);
+
+	if (pthread_create(&TA, &attr, TA_Activity, NULL) < 0) {
+		perror("pthread_create");
+		exit(-1);
+	}
+
+	for (int i = 0; i < number_of_students; i++) {
+		int s = 0;
+		s = pthread_create(&Students[i], &attr, Student_Activity, (void *)i);
+		if (s < 0) {
+			perror("pthread_create");
+			exit(-1);
+		}
+	}
+
 	//Waiting for TA thread and N Student threads.
 		//hint: use pthread_join
-     
-     
+	if (pthread_join(TA, NULL) < 0) {
+	       perror("pthread_join");
+	       exit(-1);
+	}
+
+	for (int i = 0; i < number_of_students; i++) {
+		int s = 0;
+		s = pthread_join(Students[i], NULL);
+		if (s < 0) {
+			perror("pthread_join");
+			exit(-1);
+		}
+	}
 	//TODO done
 
 	//Free allocated memory
@@ -88,9 +126,13 @@ void *TA_Activity()
 {
 	//TODO
 	//TA is currently sleeping.
-
+	if (sem_post(&sem_TA) < 0 ) {
+		perror("sem_post");
+		exit(-1);
+	}
 	// lock
-    
+	
+
 	//if chairs are empty, break the loop.
 
 	//TA gets next student on chair.
