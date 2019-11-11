@@ -28,12 +28,12 @@ int CurrentIndex = 0;
  */
 // declaration semaphore TA
 sem_t sem_TA;
+// declaration semaphore student
+sem_t sem_student;
 // declaration semaphore chairs
-sem_t chairs;
-// declaration mutex Lock hall chairs and TA chair
-pthread_mutex_t hall_c; //= PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t TA_c;
-
+sem_t sem_chairs[3];
+// declaration mutex Lock TA chair and hallway chairs
+pthread_mutex_t chair;
 
 //Declared Functions
 void *TA_Activity(void*);
@@ -45,34 +45,21 @@ int main(int argc, char* argv[])
 	int id;
 	srand(time(NULL));
 	
-	int s;				// signal
-
     	//TODO
 	//Initializing Mutex Lock and Semaphores.
-	if ((s = sem_init(&sem_TA, 0, 1)) < 0) {
-		perror("sem_init");
-		exit(-1);
-	}
-	printf("sem_TA initiated with value %d.\n", sem_TA);		//TODO test
+	sem_init(&sem_TA, 0, 0);
+	printf("sem_TA initiated.\n");		//TODO test
 	
-	if ((s = sem_init(&chairs, 0, 3)) < 0) {
-		perror("sem_init");
-		exit(-1);
+	sem_init(&sem_student, 0, 0);
+	printf("sem_student initiated.\n");		//TODO test
+	for (int i = 0; i < 3; i++) {	
+		sem_init(&sem_chairs[i], 0, 0);
+		printf("sem_chairs[%d] initiated with value.\n", i);		//TODO test
 	}
-	printf("chairs initiated with value %d.\n", s);		//TODO test
 
-	if ((s = pthread_mutex_init(&hall_c, NULL)) < 0) {
-		perror("pthread_mutex_init");
-		exit(-1);
-	}
-	printf("hall chair initiated with value %d.\n", s);		//TODO test
-
-	if ((s = pthread_mutex_init(&TA_c, NULL)) < 0) {
-		perror("pthread_mutex_init");
-		exit(-1);
-	}
-	printf("TA chair initiated with value %d.\n", s);		//TODO test
-
+	pthread_mutex_init(&chair, NULL);
+	printf("mutex \"chair\" initiated.\n");		//TODO test
+	
 	//hint: use sem_init() and pthread_mutex_init()
 	////TODO done
 	
@@ -96,38 +83,24 @@ int main(int argc, char* argv[])
 	pthread_attr_t attr;
 	pthread_attr_init(&attr);
 
-	if ((s = pthread_create(&TA, &attr, TA_Activity, NULL)) < 0) {
-		perror("pthread_create");
-		exit(-1);
-	}
-	printf("TA thread created with value %d.\n", s);		//TODO test
+	pthread_create(&TA, &attr, TA_Activity, NULL);
+//	pthread_create(&TA, NULL, TA_Activity, NULL);
+	printf("TA thread created.\n");		//TODO test
 
 	for (int i = 0; i < number_of_students; i++) {
-		int s = 0;
-		s = pthread_create(&Students[i], &attr, Student_Activity, NULL);
-		if (s < 0) {
-			perror("pthread_create");
-			exit(-1);
-		}
+		pthread_create(&Students[i], &attr, Student_Activity, (void*) (long)i);
+//		pthread_create(&Students[i], NULL, Student_Activity, NULL);
 		printf("Student thread %d created.\n", i);		//TODO test
 
 	}
 
 	//Waiting for TA thread and N Student threads.
 		//hint: use pthread_join
-	if ((s = pthread_join(TA, NULL)) < 0) {
-	       perror("pthread_join");
-	       exit(-1);
-	}
-	printf("TA joined with value %d.\n", s);		//TODO test
+	pthread_join(TA, NULL);
+	printf("TA joined.\n");		//TODO test
 
 	for (int i = 0; i < number_of_students; i++) {
-		int s = 0;
-		s = pthread_join(Students[i], NULL);
-		if (s < 0) {
-			perror("pthread_join");
-			exit(-1);
-		}
+		pthread_join(Students[i], NULL);
 		printf("Student thread %d joined.\n", i);		//TODO test
 	}
 	//TODO done
@@ -140,46 +113,85 @@ int main(int argc, char* argv[])
 void *TA_Activity(void*)
 {
 	//TODO
-	//TA is currently sleeping.
-//	if (sem_post(&sem_TA) < 0 ) {
-//		perror("sem_post");
-//		exit(-1);
-//	}
-	// lock
-	
-
-	//if chairs are empty, break the loop.
-
-	//TA gets next student on chair.
-	
-	//unlock
-
-	//TA is currently helping the student
-     
-	//hint: use sem_wait(); sem_post(); pthread_mutex_lock(); pthread_mutex_unlock()
+	while (1) {
+		//TA is currently sleeping.
+		sem_wait(&sem_TA);
+		printf("A student comes in and wakes the TA.\n");
+		while (1) {
+			//lock
+			pthread_mutex_lock(&chair);
+			//if chairs are empty, break the loop.
+			if (ChairsCount == 0) {
+				pthread_mutex_unlock(&chair);
+				printf("If chairs are empty, break the loop.\n");
+				break;
+			}
+			//TA gets next student on chair.
+			sem_post(&sem_chairs[CurrentIndex]);
+			ChairsCount--;
+			printf("A student leaves a hall way chair, then goes into TA's room. # of occupied chair = %d.\n", ChairsCount);
+			CurrentIndex = (CurrentIndex + 1) % 3;
+			//unlock TA's chair
+			pthread_mutex_unlock(&chair);
+			
+			//TA is currently helping the student
+			printf("TA is currently helping the student.\n");
+			sleep(5);
+			sem_post(&sem_student);
+			usleep(100);
+		}
+	}
 	//TODO done
 }
 
 void *Student_Activity(void *threadID) 
 {
 	//TODO
-     
-	//Student  needs help from the TA
-	//Student tried to sit on a chair.
-	//wake up the TA.
-	
-	// lock
-     
-	// unlock
-	//Student leaves his/her chair.
-	//Student  is getting help from the TA
-	//Student waits to go next.
-	//Student left TA room
-	
-	//If student didn't find any chair to sit on.
-	
-	//Student will return at another time
-	
+	int StudyingTime;
+	printf("I am student %ld.\n", (long)threadID);
+
+	while (1) {
+		//Student  needs help from the TA
+		printf("I(%ld) am studying.\n", (long)threadID);
+		StudyingTime = rand() % 10;
+		sleep(StudyingTime);
+
+		printf("I(%ld) need TA's help.\n", (long)threadID);
+		
+		pthread_mutex_lock(&chair);
+		int cc = ChairsCount;
+		pthread_mutex_unlock(&chair);
+		//Student tried to sit on a chair.
+		//if student sits, wake up the TA.
+		if (cc < 3) {
+			if (cc == 0) {
+				sem_post(&sem_TA);
+//				printf("A student wakes up the TA. # of occupied chairs = %d\n", cc);		//TODO test
+			} else {
+				printf("I(%ld) am sitting on a hallway chair.\n", (long)threadID);
+			}	
+			// lock
+			pthread_mutex_lock(&chair);
+			int id = (CurrentIndex + ChairsCount) % 3;
+			ChairsCount++;
+			printf("Remaining chair: %d\n", 3 - ChairsCount);
+			// unlock
+			pthread_mutex_unlock(&chair);
+			//Student leaves his/her chair.
+			sem_wait(&sem_chairs[id]);
+			printf("TA is helping me(%ld)!!!\n", (long)threadID);
+
+			//Student  is getting help from the TA
+			
+			//Student waits to go next.
+			sem_wait(&sem_student);
+			//Student left TA room
+			printf("I(%ld) am  leaving the TA's chair.\n", (long)threadID);
+		} else {
+			//If student didn't find any chair to sit on.Student will return at another time
+			printf("Student %ld will return at anothre time.\n", (long)threadID);
+		}
 	//hint: use sem_wait(); sem_post(); pthread_mutex_lock(); pthread_mutex_unlock()
+	}
 	//TODO done
 }
