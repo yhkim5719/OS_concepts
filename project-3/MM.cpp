@@ -2,6 +2,7 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include <algorithm>
 
 // intermediate form of input file
 std::vector<int> input_file;
@@ -13,9 +14,11 @@ int num_p;
 struct proc {			
 	int pid;
 	int arrival_time;
-	int exe_time;
+	int exe_time;		
+	int exit_time;			// exit from the memory
 	int mem_pieces;
 	std::vector<int> mem_size;
+	int total_mem;
 };
 
 // all processes
@@ -26,34 +29,22 @@ std::vector<int> timeline;
 
 // page struct
 struct page {
+	int range_s;
+	int range_e;
 	int pid;
 	int page_num;
 };
 
 // whole memory struct
 struct memory {
-	int size;
-	int selected_page;
+	int capacity;
+	int rest_cap;
 	int page_size;
 	std::vector<page> pages;
 } mem;
 
-// process queue
-struct p_queue {
-	int num_p;
-	std::vector<int> p_que;
-};
-
-int turnaround_time;
-
-/*
-proc create_proc (input_file in) {
-	proc p;
-	for (int i = 1; i < in.size(); i++) {
-	}
-	return p;
-}
-*/
+std::vector<int> p_que;
+double turnaround_time = 0.0;
 
 // load a process on the memory
 //place_process (process_structure, memory) {
@@ -83,8 +74,7 @@ int main (int argc, char** argv) {
 	
 	std::cout << "Enter Memory Size: ";
 	getline (std::cin, word);
-	mem.size = stoi(word);
-	std::cout << "mem.size = " << mem.size << '\n';
+	mem.capacity = stoi(word);
 	std::cout << "Select a Page Size (1: 100, 2: 200, 3: 400): ";
 	getline (std::cin, word);
 	std::cout << "selected " << word << '\n';
@@ -101,9 +91,36 @@ int main (int argc, char** argv) {
 		default: std::cout << "\tYou put a wrong number.\n";
 			 return 0;
 	}
-	std::cout << "mem.page_size = " << mem.page_size << '\n';
+	mem.rest_cap = (mem.capacity / mem.page_size) * mem.page_size;
+	std::cout << "memory size = " << mem.rest_cap << '\n';
+	std::cout << "memory page size = " << mem.page_size << '\n';
 	
 	//split the memory multiple segments by page size;
+	for (int i = 0; i < mem.capacity/mem.page_size; i++) {
+		page pg;
+		pg.pid = -1;
+		pg.page_num = -1;
+		pg.range_s = i * mem.page_size;
+		pg.range_e = (i + 1) * mem.page_size - 1;
+		mem.pages.push_back(pg);
+	}
+	
+	// print the memory map;
+	for (int i = 0; i < mem.pages.size(); i++) {
+		if (mem.pages[i].pid != -1) {
+			if (i == 0) {
+				std::cout << '\t' << mem.pages[i].range_s << "-" << mem.pages[i].range_e << ":\t\tProcess" << mem.pages[i].pid << ", Page " << mem.pages[i].page_num << '\n';
+			} else {
+				std::cout << '\t' << mem.pages[i].range_s << "-" << mem.pages[i].range_e << ":\tProcess" << mem.pages[i].pid << ", Page " << mem.pages[i].page_num << '\n';
+			}
+		} else {
+			if (i == 0) {
+				std::cout << '\t' << mem.pages[i].range_s << "-" << mem.pages[i].range_e << ":\t\tFree frame" << '\n';
+			} else {
+				std::cout << '\t' << mem.pages[i].range_s << "-" << mem.pages[i].range_e << ":\tFree frame" << '\n';
+			}
+		}
+	}
 
 	//make process_structure from inputfile;
 	num_p = input_file[0];
@@ -111,6 +128,7 @@ int main (int argc, char** argv) {
 	int idx_next = 1;					// index for next process
 	for (int i = 0; i < num_p; i++) {
 		proc p;
+		p.exit_time = -1;				// set the default exit time from the memory as -1
 //		for (; idx_next < input_file.size(); idx_next++ ) {
 		p.pid = i+1; // add info from input file to procs
 //		std::cout << "pid = " << p.pid << '\n';
@@ -124,49 +142,186 @@ int main (int argc, char** argv) {
 		p.mem_pieces = input_file[idx_next];
 //		std::cout << "pieces = " << p.mem_pieces << '\n';
 		idx_next++;
-		for (int j = 0; j < p.mem_pieces; j++) {
-			p.mem_size.push_back(input_file[idx_next + j]);
+		p.total_mem = 0;
+		int j = p.mem_pieces;
+		while (j > 0) {
+			p.mem_size.push_back(input_file[idx_next]);
+//			std::cout << "p.mem_size[" << p.mem_pieces - j << "] = " << p.mem_size[p.mem_pieces - j] << '\n';
+			p.total_mem += p.mem_size[p.mem_pieces - j];
+			j--;
 			idx_next++;
-//			std::cout << "p.mem_size[" << j << "] = " << p.mem_size[j] << '\n';
 		}
 		procs.push_back(p);
 	}
-	
 	for (int i = 0; i < num_p; i++) {
-		std::cout << "process " << procs[i].pid << '\n' << "arrival " << procs[i].arrival_time << ", exe time " << procs[i].exe_time << '\n' << "pieces " << procs[i].mem_pieces << '\n';
-	};
-
-	for (int i = 0; i < num_p; i++) {
-		timeline.push_back(procs[i].arrival_time);
+		turnaround_time += (double)procs[i].exe_time;
 	}
-
-	for (int i = 0; i < timeline.size(); i++) {
-		std::cout << timeline[i] << " ";
-	}
-/*	-------------------
- *
-	adjust virtual_timeline;
-		read arrival time;
-		add to the virtual_timeline;	// all of them will be an event
-	follow_timeline;
-	meet an event;
-		if (arrival_time == min(arrival_time, complete_process)) {
-			add process to the queue;
-		} else {
-			empty the pages occupied by completed_process;
-			turnaround_time += execution time;
+	// test	
+//	std::cout << "base ta_time = " << turnaround_time << '\n';
+//	for (int i = 0; i < num_p; i++) {
+//		std::cout << "process " << procs[i].pid << '\n' << "arrival " << procs[i].arrival_time << ", exe time " << procs[i].exe_time << '\n' << "pieces " << procs[i].mem_pieces << '\n' << "total_mem " << procs[i].total_mem << '\n';
+//	};
+	// add arrival_events on the timeline
+	timeline.push_back(-1);
+	int m = 0;
+//	std::cout << "timeline[0] = " << timeline[0] << '\n';
+	while (timeline[0] == -1) {
+		if (procs[m].total_mem <= mem.rest_cap) {
+			timeline[0] = procs[m].arrival_time;
+			break;
 		}
-		check the 1st process of queue can be placed on memory;
-			if (yes)
-				place it;							//TODO another function
-				add an event on timeline = current time + execution time;
-				turnaround_time += (current time - arrivaltime);		// wait_time
-				empty it from the queue;
-			else (no)
-				check the next process;						//TODO could be changed
-				until the end of queue;
-	if (no more timeline)
-		print turnaround_time;
-*/	
+		std::cout << "\tProcess " << m + 1 << " needs " << procs[m].total_mem << " memory space, and it does not fit this " << mem.rest_cap << " memory size." << '\n';
+		m++;
+	}
+	for (int i = m; i < num_p; i++) {
+	       	if (procs[i].total_mem > mem.rest_cap) {
+			std::cout << "\tProcess " << i + 1 << " needs " << procs[i].total_mem << " memory space, and it does not fit this " << mem.rest_cap << " memory size." << '\n';
+			continue;
+		}
+		if (procs[i - 1].arrival_time != procs[i].arrival_time) {
+			timeline.push_back(procs[i].arrival_time);
+		}
+	}
+	timeline.push_back(-1);
+	// test timeline
+//	for (int i = 0; i < timeline.size(); i++) {
+//		std::cout << timeline[i] << " ";
+//	}
+//	std::cout << '\n';
+	// check timeline
+	// check at that time, whether arriving events exist	
+	
+	int i = 0;
+	int t_line = timeline.size() + 1;
+	while (i < t_line) {
+//	for (int i = 0; i < t_line; i++) {
+		if (timeline[i] != -1) {
+			std::cout << "t = " << timeline[i] << " :" << '\n';
+			// put the arrived processes on the input queue
+			for (int j = 0; j < procs.size(); j++) {
+				if (timeline[i] == procs[j].arrival_time) {
+					std::cout << "\tprocess " << j + 1 << " arrived." << '\n';
+					p_que.push_back(procs[j].pid);
+				}
+			}
+			// print the input queue
+			if (p_que.size() != 0) {
+				std::cout << "\tInput Queue : [";
+			}
+			for (int j = 0; j < p_que.size(); j++) {
+				if (j == p_que.size() - 1) {
+					std::cout << p_que[j] << "]"<< '\n';
+				} else {
+					std::cout << p_que[j] << " ";
+				}
+			}
+			// check whether a completed process exists on the memory
+			for (int j = 0; j < num_p; j++) {
+				if (timeline[i] == procs[j].exit_time) {
+					std::cout << "\tprocess " << procs[j].pid << " completes." << '\n';
+//					remove process[j] from the memory;	//TODO
+					int num_pg = 0;
+					for (int k = 0; k < mem.pages.size(); k++) {
+						if (mem.pages[k].pid == procs[j].pid) {
+							mem.pages[k].pid = -1;
+							mem.pages[k].page_num = -1;
+							num_pg++;
+						}
+					}
+					mem.rest_cap += (num_pg * mem.page_size);
+//					removing process[j] is done! //TODO 
+	// print the memory map;
+	
+					for (int j = 0; j < mem.pages.size(); j++) {
+						if (mem.pages[j].pid != -1) {
+							if (j == 0) {
+								std::cout << '\t' << mem.pages[j].range_s << "-" << mem.pages[j].range_e << ":\t\tProcess" << mem.pages[j].pid << ", Page " << mem.pages[j].page_num << '\n';
+							} else {
+								std::cout << '\t' << mem.pages[j].range_s << "-" << mem.pages[j].range_e << ":\tProcess" << mem.pages[j].pid << ", Page " << mem.pages[j].page_num << '\n';
+							}
+						} else {
+							if (j == 0) {
+								std::cout << '\t' << mem.pages[j].range_s << "-" << mem.pages[j].range_e << ":\t\tFree frame" << '\n';
+							} else {
+								std::cout << '\t' << mem.pages[j].range_s << "-" << mem.pages[j].range_e << ":\tFree frame" << '\n';
+							}
+						}
+					}
+//--------------------------------
+				}
+			}
+			// move a process from queue to memory
+
+			// add exit time of a moved process on the timeline
+			timeline.pop_back();
+			for (int k = 0; k < p_que.size(); k++) {
+				if (mem.rest_cap >= procs[p_que[k] - 1].total_mem && p_que[k] != 0) {
+					std::cout << "\tprocess " << p_que[k] << " to memory." << '\n';
+//					place process[j] on the memory;		//TODO
+					int proc_mem = procs[p_que[k] - 1].total_mem;	// to check how much memory to be moved after using # of pages
+					int num_pg = proc_mem/mem.page_size;		// indicates how many pages is used for the process
+					if (proc_mem % mem.page_size != 0) {
+						num_pg += 1;
+					}
+					std::cout << "\tProcess " << p_que[k] << " needs " << num_pg << " pages." << '\n';
+					for (int j = 0; j < num_pg; j++) {
+						for (int l = 0; l < mem.pages.size(); l++) {
+							if (mem.pages[l].pid == -1) {
+								mem.pages[l].pid = p_que[k];
+								mem.pages[l].page_num = j + 1;
+								break;
+							}
+						}
+					}
+					mem.rest_cap -= (num_pg * mem.page_size);
+	// print the memory map;
+					for (int j = 0; j < mem.pages.size(); j++) {
+						if (mem.pages[j].pid != -1) {
+		
+							if (j == 0) {			
+								std::cout << '\t' << mem.pages[j].range_s << "-" << mem.pages[j].range_e << ":\t\tProcess" << mem.pages[j].pid << ", Page " << mem.pages[j].page_num << '\n';
+							} else {
+								std::cout << '\t' << mem.pages[j].range_s << "-" << mem.pages[j].range_e << ":\tProcess" << mem.pages[j].pid << ", Page " << mem.pages[j].page_num << '\n';
+							}
+						} else {
+							if (j == 0) {
+								std::cout << '\t' << mem.pages[j].range_s << "-" << mem.pages[j].range_e << ":\t\tFree frame" << '\n';
+							} else {
+								std::cout << '\t' << mem.pages[j].range_s << "-" << mem.pages[j].range_e << ":\tFree frame" << '\n';
+							}
+						}
+					}
+//--------------------------------
+//					mem.rest_cap -= procs[p_que[k] - 1].total_mem;
+//					std::cout << "\tremained memory : " << mem.rest_cap << '\n';
+					procs[p_que[k] - 1].exit_time = procs[p_que[k] - 1].exe_time + timeline[i];
+					bool same = true;
+					for (int j = 0; j < timeline.size(); j++) {
+						if (timeline[j] == procs[p_que[k] - 1].exit_time) {
+							same = false;
+							break;
+						}
+					}
+					if (same) {
+						timeline.push_back(procs[p_que[k] - 1].exit_time);
+//						std::cout << "\tnew event is added on time " << procs[p_que[k] - 1].exit_time << '\n';
+					}
+					turnaround_time += (double)(timeline[i] - procs[p_que[k] - 1].arrival_time);
+					std::sort (timeline.begin(), timeline.end());
+					p_que.erase (p_que.begin() + k);
+					k--;
+				}
+			}
+			
+			timeline.push_back(-1);
+		} else {
+			std::cout << "All done." << '\n';
+		}
+		t_line = timeline.size();
+		i++;
+//		std::cout << "\tt_line = " << t_line << ", i = " << i << '\n';
+	}
+	double ta_time = turnaround_time / num_p;
+	std::cout << "turnaround time = " << ta_time << "\t(" << turnaround_time << " / " << num_p << ")" << '\n';
 	return 0;
 }
