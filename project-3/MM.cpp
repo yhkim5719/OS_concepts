@@ -46,10 +46,6 @@ struct memory {
 std::vector<int> p_que;
 double turnaround_time = 0.0;
 
-// load a process on the memory
-//place_process (process_structure, memory) {
-//}
-
 int main (int argc, char** argv) {
 	
 	//read file, argc 2(filename.exe inputfile.txt);
@@ -75,6 +71,10 @@ int main (int argc, char** argv) {
 	std::cout << "Enter Memory Size: ";
 	getline (std::cin, word);
 	mem.capacity = stoi(word);
+	if (mem.capacity > 30000) {
+		std::cout << "The maximum Memory Size is 30,000." << '\n';
+		return 0;
+	}
 	std::cout << "Select a Page Size (1: 100, 2: 200, 3: 400): ";
 	getline (std::cin, word);
 	std::cout << "selected " << word << '\n';
@@ -106,18 +106,20 @@ int main (int argc, char** argv) {
 	}
 	
 	// print the memory map;
-	for (int i = 0; i < mem.pages.size(); i++) {
-		if (mem.pages[i].pid != -1) {
-			if (i == 0) {
-				std::cout << '\t' << mem.pages[i].range_s << "-" << mem.pages[i].range_e << ":\t\tProcess" << mem.pages[i].pid << ", Page " << mem.pages[i].page_num << '\n';
+	// print the memory map;
+	
+	for (int j = 0; j < mem.pages.size(); j++) {
+		if (mem.pages[j].pid != -1) {
+			if (j == 0) {
+				std::cout << '\t' << mem.pages[j].range_s << "-" << mem.pages[j].range_e << ":\t\tProcess" << mem.pages[j].pid << ", Page " << mem.pages[j].page_num << '\n';
 			} else {
-				std::cout << '\t' << mem.pages[i].range_s << "-" << mem.pages[i].range_e << ":\tProcess" << mem.pages[i].pid << ", Page " << mem.pages[i].page_num << '\n';
+				std::cout << '\t' << mem.pages[j].range_s << "-" << mem.pages[j].range_e << ":\tProcess" << mem.pages[j].pid << ", Page " << mem.pages[j].page_num << '\n';
 			}
 		} else {
-			if (i == 0) {
-				std::cout << '\t' << mem.pages[i].range_s << "-" << mem.pages[i].range_e << ":\t\tFree frame" << '\n';
+			if (j == 0) {
+				std::cout << '\t' << mem.pages[j].range_s << "-" << mem.pages[j].range_e << ":\t\tFree frame" << '\n';
 			} else {
-				std::cout << '\t' << mem.pages[i].range_s << "-" << mem.pages[i].range_e << ":\tFree frame" << '\n';
+				std::cout << '\t' << mem.pages[j].range_s << "-" << mem.pages[j].range_e << ":\tFree frame" << '\n';
 			}
 		}
 	}
@@ -134,6 +136,10 @@ int main (int argc, char** argv) {
 //		std::cout << "pid = " << p.pid << '\n';
 		idx_next++;
 		p.arrival_time = input_file[idx_next];
+		if (p.arrival_time > 100000) {
+			std::cout << "\tTIMEOUT! t > 100000" << '\n';
+			return 0;
+		}
 //		std::cout << "arrival_time = " << p.arrival_time << '\n';
 		idx_next++;
 		p.exe_time = input_file[idx_next];
@@ -304,6 +310,10 @@ int main (int argc, char** argv) {
 					}
 					if (same) {
 						timeline.push_back(procs[p_que[k] - 1].exit_time);
+						if (procs[p_que[k] - 1].exit_time > 100000) {
+							std::cout << "\tTIMEOUT! t > 100,000" << '\n';
+							return 0;
+						}
 //						std::cout << "\tnew event is added on time " << procs[p_que[k] - 1].exit_time << '\n';
 					}
 					turnaround_time += (double)(timeline[i] - procs[p_que[k] - 1].arrival_time);
